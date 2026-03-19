@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "hQQ6R/xtHwU=",
+  "success": true,
+  "projectFilePath": "/Users/arafatmannan/Desktop/Arafat/dotnet/dotnet-microservices-ecom/gateway/gateway.csproj",
+  "expectedPackageFiles": [
+    "/Users/arafatmannan/.nuget/packages/microsoft.aspnetcore.openapi/10.0.5/microsoft.aspnetcore.openapi.10.0.5.nupkg.sha512",
+    "/Users/arafatmannan/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
