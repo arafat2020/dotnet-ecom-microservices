@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace product_service.Model;
  
- [Index(nameof(Name), IsUnique = true)]
+[Index(nameof(Name), IsUnique = true)]
 public class CategoryModel
 {
     [Key]
