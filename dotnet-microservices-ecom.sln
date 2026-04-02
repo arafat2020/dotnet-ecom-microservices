@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Image-service", "services\I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "auth-service", "services\auth-service\auth-service.csproj", "{3360E763-645C-4E7E-9ADE-D49343D06C31}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gateway", "gateway\gateway.csproj", "{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,18 @@ Global
 		{3360E763-645C-4E7E-9ADE-D49343D06C31}.Release|x64.Build.0 = Release|Any CPU
 		{3360E763-645C-4E7E-9ADE-D49343D06C31}.Release|x86.ActiveCfg = Release|Any CPU
 		{3360E763-645C-4E7E-9ADE-D49343D06C31}.Release|x86.Build.0 = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|x64.Build.0 = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Debug|x86.Build.0 = Debug|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|x64.ActiveCfg = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|x64.Build.0 = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|x86.ActiveCfg = Release|Any CPU
+		{4C91AB39-72C7-4650-90E0-D69FDA16CBAC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
