@@ -1,6 +1,6 @@
 namespace auth_service.Utils;
 
-public static class Utils
+public static class AuthUtils
 {
     public static string HashPassword(string password)
     {

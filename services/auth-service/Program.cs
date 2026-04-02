@@ -2,6 +2,8 @@ using db.AuthDbContext;
 using Microsoft.EntityFrameworkCore;
 using auth_service.interfaces;
 using auth_service.utils;
+using auth_service.Interfaces;
+using auth_service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,13 @@ builder.Services.AddControllers();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
+
+// Register application services start
 builder.Services.AddScoped<IAuth, Auth>();
+builder.Services.AddScoped<IAuthservice, AuthService>();
+// Register application services end
+
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {

@@ -24,6 +24,12 @@ public class AuthDbContext : DbContext
             e.HasIndex(u => u.Username)
             .IsUnique();
 
+            e.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(256);
+            e.HasIndex(u => u.Email)
+            .IsUnique();
+
         });
 
         modelBuilder.Entity<Role>(entity =>
