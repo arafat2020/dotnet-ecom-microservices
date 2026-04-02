@@ -57,6 +57,13 @@ app.UseAuthorization();
 app.UseAuthentication();
 
 
-app.Run();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var config = services.GetRequiredService<IConfiguration>();
+    
+    // Run the admin seeder
+    await auth_service.Seed.AdminSeed.SeedAsync(services, config);
+}
 
-  
+app.Run();
