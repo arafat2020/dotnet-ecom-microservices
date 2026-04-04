@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Protos.Auth";
+
+import "Protos/common.proto";
+
+package auth;
+
+// Request for validating a token
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+// Response for validating a token
+message ValidateTokenResponse {
+    bool isValid = 1;
+    string userId = 2;
+    repeated .common.Role roles = 3;
+}
+
+// The Auth Service definition
+service AuthService {
+    // Validates a JWT and returns the associated roles
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+}

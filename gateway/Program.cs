@@ -1,8 +1,48 @@
+using gateway.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Shared.Protos.Auth;
+using Shared.Protos.Product;
+using System.Reflection;
+
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Gateway to listen on Port 5000
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000);
+});
+
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+
+// Register gRPC Clients
+builder.Services.AddGrpcClient<AuthService.AuthServiceClient>(o =>
+{
+    o.Address = new Uri("http://localhost:5001");
+});
+
+builder.Services.AddGrpcClient<ProductService.ProductServiceClient>(o =>
+{
+    o.Address = new Uri("http://localhost:5002");
+});
+
+// Register Custom gRPC-based Authentication Handler
+builder.Services.AddAuthentication("GrpcAuth")
+    .AddScheme<AuthenticationSchemeOptions, GrpcAuthenticationHandler>("GrpcAuth", null);
+
+builder.Services.AddAuthorization();
+
+// Configure Swagger with XML Documentation support
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+});
 
 var app = builder.Build();
 
@@ -10,32 +50,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

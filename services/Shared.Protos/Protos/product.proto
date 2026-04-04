@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Protos.Product";
+
+import "Protos/common.proto";
+
+package product;
+
+// Request to create a category
+message CreateCategoryRequest {
+    string name = 1;
+    string description = 2;
+}
+
+// Response from category creation
+message CreateCategoryResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    bool success = 4;
+    string message = 5;
+}
+
+// The Product Service definition
+service ProductService {
+    // Creates a category (Requires Admin Role)
+    rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+}
