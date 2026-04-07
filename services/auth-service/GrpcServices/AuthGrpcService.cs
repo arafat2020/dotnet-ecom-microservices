@@ -9,7 +9,7 @@ namespace auth_service.GrpcServices;
 /// gRPC Service for Authentication operations.
 /// This service is used by the API Gateway to validate tokens and extract user roles.
 /// </summary>
-public class AuthGrpcService : Shared.Protos.Auth.AuthService.AuthServiceBase
+public class AuthGrpcService : AuthService.AuthServiceBase
 {
     private readonly IAuth _authService;
     private readonly ILogger<AuthGrpcService> _logger;

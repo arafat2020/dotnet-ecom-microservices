@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Shared.Protos.Auth;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
-using Grpc.Net.Client;
 
 namespace gateway.Auth;
 
