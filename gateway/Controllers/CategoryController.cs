@@ -1,3 +1,4 @@
+using gateway.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Protos.Product;
@@ -7,10 +8,10 @@ namespace gateway.Controllers;
 /// <summary>
 /// Controller for Category operations.
 /// Acts as a REST-to-gRPC proxy for the Product Service.
+/// All responses are wrapped in a standardized <see cref="ApiResponse{T}"/> envelope.
 /// </summary>
-[ApiController]
 [Route("api/categories")]
-public class CategoryController : ControllerBase
+public class CategoryController : ApiControllerBase
 {
     private readonly ProductService.ProductServiceClient _productServiceClient;
     private readonly ILogger<CategoryController> _logger;
@@ -30,31 +31,36 @@ public class CategoryController : ControllerBase
     /// Creates a new category. Only accessible by users with the Admin role.
     /// </summary>
     /// <param name="request">The category details.</param>
-    /// <returns>The created category details.</returns>
+    /// <returns>A standardized response containing the created category details.</returns>
     /// <response code="200">Returns the created category.</response>
-    /// <response code="401">Unauthorized if no valid token is provided.</response>
-    /// <response code="403">Forbidden if the user is not an Admin.</response>
+    /// <response code="400">Request was rejected by the Product Service.</response>
+    /// <response code="401">No valid token was provided.</response>
+    /// <response code="403">The authenticated user is not an Admin.</response>
+    /// <response code="500">Product Service is unavailable.</response>
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(typeof(CreateCategoryResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<CreateCategoryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
     {
         try
         {
             var response = await _productServiceClient.CreateCategoryAsync(request);
+
             if (!response.Success)
             {
-                return BadRequest(new { response.Message });
+                return ApiBadRequest(response.Message);
             }
 
-            return Ok(response);
+            return ApiOk(response, "Category created successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calling Product Service via gRPC.");
-            return StatusCode(500, "An internal error occurred while communicating with the Product Service.");
+            return ApiInternalError("An internal error occurred while communicating with the Product Service.");
         }
     }
 }
