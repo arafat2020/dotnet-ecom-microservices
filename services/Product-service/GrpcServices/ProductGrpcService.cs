@@ -62,4 +62,44 @@ public class ProductGrpcService : Shared.Protos.Product.ProductService.ProductSe
             };
         }
     }
+
+    /// <summary>
+    /// Gets all categories.
+    /// </summary>
+    /// <param name="request">The get categories request.</param>
+    /// <param name="context">The gRPC call context.</param>
+    /// <returns>A response containing the list of categories.</returns>
+    public override async Task<GetCategoriesResponse> GetCategories(GetCategoriesRequest request, ServerCallContext context)
+    {
+        try
+        {
+            var categories = await _categoryService.GetAllAsync();
+            var response = new GetCategoriesResponse
+            {
+                Success = true,
+                Message = "Categories retrieved successfully."
+            };
+
+            foreach (var category in categories)
+            {
+                response.Categories.Add(new CategoryDto
+                {
+                    Id = category.Id.ToString(),
+                    Name = category.Name ?? "",
+                    Description = category.Description ?? ""
+                });
+            }
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving categories via gRPC.");
+            return new GetCategoriesResponse
+            {
+                Success = false,
+                Message = ex.Message
+            };
+        }
+    }
 }

@@ -63,4 +63,33 @@ public class CategoryController : ApiControllerBase
             return ApiInternalError("An internal error occurred while communicating with the Product Service.");
         }
     }
+
+    /// <summary>
+    /// Retrieves all categories.
+    /// </summary>
+    /// <returns>A standardized response containing the list of categories.</returns>
+    /// <response code="200">Returns the list of categories.</response>
+    /// <response code="500">Product Service is unavailable.</response>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<GetCategoriesResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetCategories()
+    {
+        try
+        {
+            var response = await _productServiceClient.GetCategoriesAsync(new GetCategoriesRequest());
+
+            if (!response.Success)
+            {
+                return ApiInternalError(response.Message);
+            }
+
+            return ApiOk(response, "Categories retrieved successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calling Product Service via gRPC.");
+            return ApiInternalError("An internal error occurred while communicating with the Product Service.");
+        }
+    }
 }

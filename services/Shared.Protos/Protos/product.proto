@@ -21,8 +21,29 @@ message CreateCategoryResponse {
     string message = 5;
 }
 
+// Request to get all categories
+message GetCategoriesRequest {
+}
+
+// Category details
+message CategoryDto {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+// Response containing list of categories
+message GetCategoriesResponse {
+    repeated CategoryDto categories = 1;
+    bool success = 2;
+    string message = 3;
+}
+
 // The Product Service definition
 service ProductService {
     // Creates a category (Requires Admin Role)
     rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
+    
+    // Gets all categories
+    rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
 }
