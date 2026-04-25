@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Gateway to listen on Port 5000
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5000);
+    options.ListenAnyIP(5999);
 });
 
 // Add services to the container.
@@ -19,12 +19,12 @@ builder.Services.AddControllers();
 // Register gRPC Clients
 builder.Services.AddGrpcClient<AuthService.AuthServiceClient>(o =>
 {
-    o.Address = new Uri("http://localhost:5001");
+    o.Address = new Uri("http://localhost:50011");
 });
 
 builder.Services.AddGrpcClient<ProductService.ProductServiceClient>(o =>
 {
-    o.Address = new Uri("http://localhost:5002");
+    o.Address = new Uri("http://localhost:50021");
 });
 
 // Register Custom gRPC-based Authentication Handler
