@@ -1,5 +1,6 @@
 using gateway.Auth;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.OpenApi;
 using Shared.Protos.Auth;
 using Shared.Protos.Product;
 using System.Reflection;
@@ -42,6 +43,25 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+
+    // Add Bearer token authentication support to Swagger UI
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token. Example: eyJhbGciOiJIUzI1NiIs..."
+    });
+
+    options.AddSecurityRequirement(doc =>
+    {
+        var requirement = new OpenApiSecurityRequirement();
+        var schemeRef = new OpenApiSecuritySchemeReference("Bearer", doc);
+        requirement[schemeRef] = new List<string>();
+        return requirement;
+    });
 });
 
 var app = builder.Build();
@@ -54,8 +74,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapControllers();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 
 app.Run();
