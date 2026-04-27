@@ -82,4 +82,28 @@ public class GrpcAuthenticationHandler : AuthenticationHandler<AuthenticationSch
             return AuthenticateResult.Fail("Auth Service communication error.");
         }
     }
+
+    /// <summary>
+    /// Returns a 401 Unauthorized response with a descriptive message when no valid token is provided.
+    /// </summary>
+    protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = StatusCodes.Status401Unauthorized;
+        Response.ContentType = "application/json";
+        var body = System.Text.Json.JsonSerializer.Serialize(
+            gateway.Models.ApiResponse<object?>.Unauthorized("Authentication required. Please provide a valid Bearer token."));
+        await Response.WriteAsync(body);
+    }
+
+    /// <summary>
+    /// Returns a 403 Forbidden response with a descriptive message when the user lacks the required role.
+    /// </summary>
+    protected override async Task HandleForbiddenAsync(AuthenticationProperties properties)
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        Response.ContentType = "application/json";
+        var body = System.Text.Json.JsonSerializer.Serialize(
+            gateway.Models.ApiResponse<object?>.Forbidden("You do not have permission to perform this operation."));
+        await Response.WriteAsync(body);
+    }
 }
