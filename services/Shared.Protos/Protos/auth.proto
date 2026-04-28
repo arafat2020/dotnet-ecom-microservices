@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Protos.Auth";
+
+import "Protos/common.proto";
+
+package auth;
+
+// Request for validating a token
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+// Response for validating a token
+message ValidateTokenResponse {
+    bool isValid = 1;
+    string userId = 2;
+    repeated .common.Role roles = 3;
+}
+
+// Request for registering a new user
+message RegisterRequest {
+    string username = 1;
+    string email = 2;
+    string password = 3;
+}
+
+// Request for logging in
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+// Response containing an auth token
+message AuthTokenResponse {
+    string token = 1;
+    string expiration = 2;  // ISO 8601 UTC datetime string
+}
+
+// The Auth Service definition
+service AuthService {
+    // Validates a JWT and returns the associated roles
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+    // Registers a new user and returns a token
+    rpc Register (RegisterRequest) returns (AuthTokenResponse);
+    // Logs in an existing user and returns a token
+    rpc Login (LoginRequest) returns (AuthTokenResponse);
+}

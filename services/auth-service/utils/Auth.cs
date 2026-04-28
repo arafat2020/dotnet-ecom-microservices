@@ -16,7 +16,7 @@ public class Auth : IAuth
         _configuration = configuration;
     }
 
-    public TokenResponseDto GenerateToken(string username, Guid userId)
+    public TokenResponseDto GenerateToken(string username, Guid userId, IEnumerable<string> roles)
     {
         var jwtKey = _configuration["Jwt:Key"];
         if (string.IsNullOrEmpty(jwtKey))
@@ -27,13 +27,21 @@ public class Auth : IAuth
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(jwtKey);
 
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+        };
+
+        // Add role claims so they are embedded in the JWT
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-            }),
+            Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddDays(15),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),

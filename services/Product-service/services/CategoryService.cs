@@ -19,6 +19,7 @@ public class CategoryService : ICategoryService
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
+            Description = dto.Description,
             ParentId = dto.ParentId
         };
 
@@ -28,6 +29,7 @@ public class CategoryService : ICategoryService
         {
             Id = category.Id,
             Name = category.Name,
+            Description = category.Description,
             ParentId = category.ParentId
         };
     }
@@ -38,6 +40,7 @@ public class CategoryService : ICategoryService
         {
             Id = c.Id,
             Name = c.Name,
+            Description = c.Description,
             ParentId = c.ParentId
         }).ToListAsync();
         return categories;

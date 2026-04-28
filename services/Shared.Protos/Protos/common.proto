@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+// Common namespace for generated C# code
+option csharp_namespace = "Shared.Protos";
+
+package common;
+
+// A standard empty message
+message Empty { }
+
+// A standard message representing a role
+message Role {
+    string name = 1;
+}
+
+message StatusResponse {
+    bool success = 1;
+    string message = 2;
+}

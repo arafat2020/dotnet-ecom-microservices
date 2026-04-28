@@ -69,13 +69,16 @@ public class AuthService : IAuthservice
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return _auth.GenerateToken(user.Username, user.Id);
+        var roleNames = user.UserRoles.Select(ur => ur.Role.Name);
+        return _auth.GenerateToken(user.Username, user.Id, roleNames);
     }
 
     public async Task<TokenResponseDto> LoginAsync(LoginDto loginDto)
     {
-        // Find the user by email
+        // Find the user by email, eagerly loading roles
         var user = await _context.Users
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Email == loginDto.Email.ToLower());
 
         if (user == null)
@@ -87,6 +90,7 @@ public class AuthService : IAuthservice
         if (!isValid)
             throw new UnauthorizedAccessException("Invalid username or password.");
 
-        return _auth.GenerateToken(user.Username, user.Id);
+        var roleNames = user.UserRoles.Select(ur => ur.Role.Name);
+        return _auth.GenerateToken(user.Username, user.Id, roleNames);
     }
 }
