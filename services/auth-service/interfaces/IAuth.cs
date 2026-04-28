@@ -5,6 +5,6 @@ namespace auth_service.interfaces;
 
 public interface IAuth
 {
-    TokenResponseDto GenerateToken(string username, Guid userId);
+    TokenResponseDto GenerateToken(string username, Guid userId, IEnumerable<string> roles);
     ClaimsPrincipal? VerifyToken(string token);
 }

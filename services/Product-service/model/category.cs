@@ -12,6 +12,8 @@ public class CategoryModel
     [Required]
     public string Name { get; set; } = null!;
 
+    public string? Description { get; set; }
+
     // Self reference
     public Guid? ParentId { get; set; }
     public CategoryModel? Parent { get; set; }
