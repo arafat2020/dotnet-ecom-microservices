@@ -127,7 +127,7 @@ public class MinioService : IMinioService
         {
             await _s3.GetBucketLocationAsync(bucket);
         }
-        catch (Amazon.S3.AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             await _s3.PutBucketAsync(bucket);
             _logger.LogInformation("Created MinIO bucket '{Bucket}'", bucket);
