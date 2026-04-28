@@ -25,6 +25,7 @@ var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConne
 builder.Services.AddDbContext<ProductDbContext>(option=>option.UseSqlServer(dbConnectionString));
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -52,6 +53,7 @@ if (app.Environment.IsDevelopment())
 
 // Configure the HTTP request pipeline.
 app.MapControllers();
+app.MapGrpcService<CategoryGrpcService>();
 app.MapGrpcService<ProductGrpcService>();
 
 app.Run();

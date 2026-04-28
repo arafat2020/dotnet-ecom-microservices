@@ -15,7 +15,7 @@ message ValidateTokenRequest {
 message ValidateTokenResponse {
     bool isValid = 1;
     string userId = 2;
-    repeated .common.Role roles = 3;
+    repeated common.Role roles = 3;
 }
 
 // Request for registering a new user

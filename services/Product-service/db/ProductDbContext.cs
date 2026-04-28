@@ -6,6 +6,10 @@ public class ProductDbContext: DbContext
     public ProductDbContext(DbContextOptions<ProductDbContext> options): base(options){}
 
     public DbSet<CategoryModel> categories {get; set;} = null!;
+    public DbSet<Product> products {get; set;} = null!;
+    public DbSet<ProductVariant> productVariants {get; set;} = null!;
+
+    public DbSet<ProductVariant> productVariantOptions {get; set;} = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

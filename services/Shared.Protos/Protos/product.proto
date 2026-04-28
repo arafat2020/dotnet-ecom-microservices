@@ -39,11 +39,26 @@ message GetCategoriesResponse {
     string message = 3;
 }
 
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double basePrice = 3;
+  string categoryId = 4;
+}
+
+message ProductResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double basePrice = 4;
+  string categoryId = 5;
+}
+
 // The Product Service definition
 service ProductService {
-    // Creates a category (Requires Admin Role)
     rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
-    
-    // Gets all categories
+
     rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
+
+    rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
 }

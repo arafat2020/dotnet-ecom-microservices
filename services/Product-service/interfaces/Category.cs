@@ -1,4 +1,3 @@
-using product_service.Model;
 using product_service.DTOs;
 
 namespace product_service.Interfaces;
