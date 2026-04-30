@@ -13,12 +13,14 @@ public class ImageController : ControllerBase
     private readonly IMinioService _minio;
     private readonly ImageDbContext _db;
     private readonly ILogger<ImageController> _logger;
+    private readonly IImageDeletionQueue _queue;
 
-    public ImageController(IMinioService minio, ImageDbContext db, ILogger<ImageController> logger)
+    public ImageController(IMinioService minio, ImageDbContext db, ILogger<ImageController> logger, IImageDeletionQueue queue)
     {
         _minio  = minio;
         _db     = db;
         _logger = logger;
+        _queue  = queue;
     }
 
     // POST /api/images/upload
@@ -85,5 +87,24 @@ public class ImageController : ControllerBase
         {
             return NotFound();
         }
+    }
+
+    // DELETE /api/images/bulk
+    [HttpDelete("bulk")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> BulkDelete([FromBody] List<Guid> ids)
+    {
+        if (ids is null || !ids.Any())
+        {
+            return BadRequest("No image IDs provided.");
+        }
+
+        foreach (var id in ids)
+        {
+            await _queue.QueueImageDeletionAsync(id);
+        }
+
+        return Accepted(new { Message = $"Queued {ids.Count} images for deletion." });
     }
 }

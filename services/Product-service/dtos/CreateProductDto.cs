@@ -8,4 +8,5 @@ public class CreateProductDto
     public Guid CategoryId { get; set; }
 
     public List<CreateProductVariantDto> Variants { get; set; } = new();
+    public List<CreateProductImageDto>? Images { get; set; } = new();
 }

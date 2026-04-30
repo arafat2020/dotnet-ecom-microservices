@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package image;
+
+option csharp_namespace = "Shared.Protos.Image";
+
+service ImageService {
+  rpc DeleteImage (DeleteImageRequest) returns (DeleteImageResponse);
+  rpc BulkDeleteImage (BulkDeleteImageRequest) returns (BulkDeleteImageResponse);
+}
+
+message DeleteImageRequest {
+  string image_id = 1;
+}
+
+message DeleteImageResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message BulkDeleteImageRequest {
+  repeated string image_ids = 1;
+}
+
+message BulkDeleteImageResponse {
+  bool success = 1;
+  string message = 2;
+}

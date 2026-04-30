@@ -21,7 +21,21 @@ public class ProductGrpcService: ProductService.ProductServiceBase
             Name = request.Name,
             Description = request.Description,
             BasePrice = (decimal)request.BasePrice,
-            CategoryId = Guid.Parse(request.CategoryId)
+            CategoryId = Guid.Parse(request.CategoryId),
+            Variants = request.Variants.Select(v => new CreateProductVariantDto
+            {
+                Name = v.Name,
+                Price = v.Price == 0 ? null : (decimal)v.Price,
+                Stock = v.Stock,
+                SKU = v.Sku
+            }).ToList(),
+            Images = request.Images.Select(i => new CreateProductImageDto
+            {
+                ImageFileId = Guid.Parse(i.ImageFileId),
+                Url = i.Url,
+                AltText = i.AltText,
+                IsPrimary = i.IsPrimary
+            }).ToList()
        };
 
        var result = await _productService.CreateAsync(dto);

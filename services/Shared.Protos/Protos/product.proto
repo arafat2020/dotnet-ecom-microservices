@@ -39,11 +39,27 @@ message GetCategoriesResponse {
     string message = 3;
 }
 
+message ProductVariantMessage {
+  string name = 1;
+  double price = 2;
+  int32 stock = 3;
+  string sku = 4;
+}
+
+message ProductImageMessage {
+  string imageFileId = 1;
+  string url = 2;
+  string altText = 3;
+  bool isPrimary = 4;
+}
+
 message CreateProductRequest {
   string name = 1;
   string description = 2;
   double basePrice = 3;
   string categoryId = 4;
+  repeated ProductVariantMessage variants = 5;
+  repeated ProductImageMessage images = 6;
 }
 
 message ProductResponse {

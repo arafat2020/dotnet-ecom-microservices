@@ -2,17 +2,24 @@ using product_service.Model;
 using product_service.DTOs;
 using Microsoft.EntityFrameworkCore;
 using product_service.Interfaces;
+using Shared.Protos.Image;
 
 namespace product_service.services;
 
 public class ProductService : IProductService
 {
     private readonly ProductDbContext _context;
-    private readonly Logger<ProductService> _logger;
-    public ProductService(ProductDbContext context, Logger<ProductService> logger)
+    private readonly ILogger<ProductService> _logger;
+    private readonly ImageService.ImageServiceClient _imageServiceClient;
+
+    public ProductService(
+        ProductDbContext context, 
+        ILogger<ProductService> logger,
+        ImageService.ImageServiceClient imageServiceClient)
     {
         _context = context;
         _logger = logger;
+        _imageServiceClient = imageServiceClient;
     }
 
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
@@ -34,6 +41,21 @@ public class ProductService : IProductService
 
             _context.products.Add(product);
             await _context.SaveChangesAsync();
+
+            if (dto.Images != null && dto.Images.Any())
+            {
+                var images = dto.Images.Select(i => new ProductImage
+                {
+                    ProductId = product.Id,
+                    ImageFileId = i.ImageFileId,
+                    Url = i.Url,
+                    AltText = i.AltText,
+                    IsPrimary = i.IsPrimary
+                }).ToList();
+
+                _context.productImages.AddRange(images);
+                await _context.SaveChangesAsync();
+            }
 
             if (dto.Variants.Any())
             {
@@ -64,6 +86,25 @@ public class ProductService : IProductService
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error creating product. Transaction rolled back.");
+
+            // Rollback: delete images from Image-service
+            if (dto.Images != null && dto.Images.Any())
+            {
+                try
+                {
+                    var imageIds = dto.Images.Select(i => i.ImageFileId.ToString()).ToList();
+                    var bulkDeleteRequest = new BulkDeleteImageRequest();
+                    bulkDeleteRequest.ImageIds.AddRange(imageIds);
+
+                    await _imageServiceClient.BulkDeleteImageAsync(bulkDeleteRequest);
+                    _logger.LogInformation("Successfully requested bulk deletion of {Count} images during product creation rollback.", imageIds.Count);
+                }
+                catch (Exception grpcEx)
+                {
+                    _logger.LogError(grpcEx, "Failed to call Image-service to rollback images for product creation.");
+                }
+            }
+
             throw;
         }
 

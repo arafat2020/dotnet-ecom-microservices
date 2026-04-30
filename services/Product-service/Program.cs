@@ -4,6 +4,7 @@ using product_service.services;
 using Product_service.GrpcServices;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Reflection;
+using Shared.Protos.Image;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,13 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+});
+
+// Register ImageServiceClient
+builder.Services.AddGrpcClient<ImageService.ImageServiceClient>(options =>
+{
+    var imageServiceUrl = builder.Configuration["GrpcUrls:ImageService"] ?? "http://localhost:52051";
+    options.Address = new Uri(imageServiceUrl);
 });
 
 var app = builder.Build();

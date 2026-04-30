@@ -12,8 +12,10 @@ public class ProductImage
     public Product Product { get; set; } = null!;
 
     [Required]
-    public string Url { get; set; } = null!; 
+    public string Url { get; set; } = null!;
     // from MinIO / S3
+
+    public Guid ImageFileId { get; set; }
 
     public string? AltText { get; set; }
 

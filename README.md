@@ -97,3 +97,23 @@ To create a brand-new microservice that uses gRPC:
 - **Port Management**: Ensure each microservice has a unique port for gRPC communication.
 - **Error Handling**: Use gRPC-specific status codes (e.g., `StatusCode.NotFound`) instead of standard Exception handling where possible.
 - **Async Everywhere**: Use `Task`-based async patterns for all gRPC methods to ensure scalability.
+
+---
+
+## 5. Background Tasks & Queues (Image Deletion)
+
+Certain operations, such as bulk deleting images from MinIO or cleaning up files after a failed transaction rollback, can be time-consuming. Instead of blocking the gRPC or HTTP request, these operations are offloaded to an internal in-memory queue.
+
+### How `ImageDeletionQueue` Works
+
+The `Image-service` implements an asynchronous, thread-safe queue using `System.Threading.Channels`:
+
+1. **The Queue (`ImageDeletionQueue`)**: An `IImageDeletionQueue` singleton is registered in `Image-service/Program.cs`. It utilizes a `BoundedChannel` to store `Guid` IDs of images marked for deletion.
+2. **The Enqueue Operation**: When a deletion is triggered via the `[HttpDelete("bulk")]` API or the `BulkDeleteImage` gRPC method, the system instantly pushes the image IDs to the queue and responds immediately to the client with an accepted status.
+3. **The Background Worker (`ImageDeletionBackgroundService`)**: A dedicated `BackgroundService` runs continuously in the background of the `Image-service`. It monitors the queue, pops IDs sequentially, instantiates a scoped `IMinioService`, and securely deletes the files from MinIO without slowing down frontend performance.
+
+### Managing the Queue
+
+- **Capacity**: The queue has a bounded limit defined in `ImageDeletionQueue.cs` (currently 1000 items). If the queue becomes full, `FullMode = BoundedChannelFullMode.Wait` ensures new requests wait asynchronously rather than dropping items.
+- **Failures**: Errors during background deletion (like network failure with MinIO) are logged by the `ImageDeletionBackgroundService` via `ILogger`. You can monitor the Docker logs for `Error occurred while deleting image` to trace failures.
+- **Modification**: This is an efficient in-memory queue suitable for single instances. If you scale the `Image-service` to multiple instances and require guaranteed delivery, consider migrating this bounded channel architecture to a distributed message broker like **RabbitMQ** or **Redis**.
