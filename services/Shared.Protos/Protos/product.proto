@@ -70,6 +70,17 @@ message ProductResponse {
   string categoryId = 5;
 }
 
+message SearchProductsRequest {
+    string query = 1;
+    int32 page = 2;
+    int32 pageSize = 3;
+}
+
+message SearchProductsResponse {
+    repeated ProductResponse products = 1;
+    int64 totalCount = 2;
+}
+
 // The Product Service definition
 service ProductService {
     rpc CreateCategory (CreateCategoryRequest) returns (CreateCategoryResponse);
@@ -77,4 +88,6 @@ service ProductService {
     rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
 
     rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+
+    rpc SearchProducts (SearchProductsRequest) returns (SearchProductsResponse);
 }

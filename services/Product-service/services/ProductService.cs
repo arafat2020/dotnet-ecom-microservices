@@ -3,7 +3,7 @@ using product_service.DTOs;
 using Microsoft.EntityFrameworkCore;
 using product_service.Interfaces;
 using Shared.Protos.Image;
-
+using Elastic.Clients.Elasticsearch;
 namespace product_service.services;
 
 public class ProductService : IProductService
@@ -11,15 +11,18 @@ public class ProductService : IProductService
     private readonly ProductDbContext _context;
     private readonly ILogger<ProductService> _logger;
     private readonly ImageService.ImageServiceClient _imageServiceClient;
+    private readonly ElasticsearchClient _elasticsearchClient;
 
     public ProductService(
         ProductDbContext context, 
         ILogger<ProductService> logger,
-        ImageService.ImageServiceClient imageServiceClient)
+        ImageService.ImageServiceClient imageServiceClient,
+        ElasticsearchClient elasticsearchClient)
     {
         _context = context;
         _logger = logger;
         _imageServiceClient = imageServiceClient;
+        _elasticsearchClient = elasticsearchClient;
     }
 
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
@@ -73,7 +76,8 @@ public class ProductService : IProductService
             }
 
             await transaction.CommitAsync();
-            return new ProductResponseDto
+
+            var responseDto = new ProductResponseDto
             {
                 Id = product.Id,
                 Name = product.Name,
@@ -81,6 +85,26 @@ public class ProductService : IProductService
                 BasePrice = product.BasePrice,
                 CategoryId = product.CategoryId
             };
+
+            // Index to Elasticsearch
+            try
+            {
+                var response = await _elasticsearchClient.IndexAsync(responseDto, i => i.Index("products").Id(responseDto.Id));
+                if (!response.IsValidResponse)
+                {
+                    _logger.LogWarning("Failed to index product {ProductId} to Elasticsearch: {Error}", responseDto.Id, response.DebugInformation);
+                }
+                else
+                {
+                    _logger.LogInformation("Successfully indexed product {ProductId} to Elasticsearch.", responseDto.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occurred while indexing product {ProductId} to Elasticsearch.", responseDto.Id);
+            }
+
+            return responseDto;
         }
         catch (Exception ex)
         {

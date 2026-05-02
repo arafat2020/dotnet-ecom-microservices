@@ -5,6 +5,7 @@ using Product_service.GrpcServices;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Reflection;
 using Shared.Protos.Image;
+using Elastic.Clients.Elasticsearch;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,15 @@ builder.Services.AddDbContext<ProductDbContext>(option=>option.UseSqlServer(dbCo
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IProductSearchService, ProductSearchService>();
+
+// Register Elasticsearch Client
+builder.Services.AddSingleton<ElasticsearchClient>(sp =>
+{
+    var settings = new ElasticsearchClientSettings(new Uri(builder.Configuration["Elasticsearch:Url"] ?? "http://localhost:9200"))
+        .DefaultIndex("products");
+    return new ElasticsearchClient(settings);
+});
 
 // Add services to the container.
 builder.Services.AddOpenApi();

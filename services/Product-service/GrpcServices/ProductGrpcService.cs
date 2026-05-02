@@ -8,10 +8,12 @@ namespace Product_service.GrpcServices;
 public class ProductGrpcService: ProductService.ProductServiceBase
 {
     private readonly IProductService _productService;
+    private readonly IProductSearchService _productSearchService;
 
-    public ProductGrpcService(IProductService productService)
+    public ProductGrpcService(IProductService productService, IProductSearchService productSearchService)
     {
         _productService = productService;
+        _productSearchService = productSearchService;
     }
 
     public override async Task<ProductResponse> CreateProduct(CreateProductRequest request, ServerCallContext context)
@@ -48,5 +50,32 @@ public class ProductGrpcService: ProductService.ProductServiceBase
                 BasePrice = (double)result.BasePrice,
                 CategoryId = result.CategoryId.ToString()
          };
+    }
+
+    public override async Task<SearchProductsResponse> SearchProducts(SearchProductsRequest request, ServerCallContext context)
+    {
+        var page = request.Page > 0 ? request.Page : 1;
+        var pageSize = request.PageSize > 0 ? request.PageSize : 10;
+
+        var (products, totalCount) = await _productSearchService.SearchAsync(request.Query, page, pageSize);
+
+        var response = new SearchProductsResponse
+        {
+            TotalCount = totalCount
+        };
+
+        foreach (var p in products)
+        {
+            response.Products.Add(new ProductResponse
+            {
+                Id = p.Id.ToString(),
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = (double)p.BasePrice,
+                CategoryId = p.CategoryId.ToString()
+            });
+        }
+
+        return response;
     }
 }
