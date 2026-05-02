@@ -1,3 +1,4 @@
+namespace product_service.DTOs;
 public class CreateProductVariantDto
 {
     public string Name { get; set; } = null!;
