@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Protos.Payment";
+
+package payment;
+
+// Request to process a payment (either Cash In or Stripe)
+message ProcessPaymentRequest {
+    string orderId = 1;
+    double amount = 2;
+    string paymentMethod = 3;     // "cash_in" or "stripe"
+    string paymentMethodId = 4;   // Stripe token/payment method ID (optional for Stripe)
+    string customerEmail = 5;
+    string customerName = 6;
+    string billingAddress = 7;
+}
+
+// Response from processing a payment
+message ProcessPaymentResponse {
+    bool success = 1;
+    string message = 2;
+    string paymentId = 3;
+    string status = 4;            // "Pending", "Completed", "Failed"
+    string stripePaymentIntentId = 5;
+}
+
+// Request to retrieve details of a specific payment
+message GetPaymentDetailsRequest {
+    string paymentId = 1;
+}
+
+// Response containing details of the payment billing record
+message GetPaymentDetailsResponse {
+    string paymentId = 1;
+    string orderId = 2;
+    double amount = 3;
+    string paymentMethod = 4;
+    string status = 5;
+    string stripePaymentIntentId = 6;
+    string createdAt = 7;         // ISO 8601 string
+}
+
+// Request to retrieve the invoice associated with a payment
+message GetInvoiceRequest {
+    string paymentId = 1;
+}
+
+// Response containing invoice metadata and the structured invoice body
+message GetInvoiceResponse {
+    string invoiceId = 1;
+    string paymentId = 2;
+    string invoiceNumber = 3;
+    string customerEmail = 4;
+    string customerName = 5;
+    string billingAddress = 6;
+    double amount = 7;
+    string invoiceBody = 8;       // Structured text/HTML representation of the invoice
+    string createdAt = 9;         // ISO 8601 string
+}
+
+// The Payment Service definition
+service PaymentService {
+    rpc ProcessPayment (ProcessPaymentRequest) returns (ProcessPaymentResponse);
+    rpc GetPaymentDetails (GetPaymentDetailsRequest) returns (GetPaymentDetailsResponse);
+    rpc GetInvoice (GetInvoiceRequest) returns (GetInvoiceResponse);
+}
