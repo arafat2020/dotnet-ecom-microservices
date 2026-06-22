@@ -1,39 +1,25 @@
+# Development overrides — automatically merged by `docker compose up`
+# These settings override docker-compose.yml for local development.
 version: "3.9"
 
 services:
 
-  product-service:
-    build:
-      context: ../services/ProductService
-    ports:
-      - "5001:8080"
+  auth-service:
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=ProductDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
-    depends_on:
-      - sqlserver
-    networks:
-      - backend
+      ASPNETCORE_ENVIRONMENT: Development
 
-  # order-service:
-  #   build:
-  #     context: ../src/OrderService
-  #   ports:
-  #     - "5002:8080"
-  #   environment:
-  #     ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=OrderDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
-  #   depends_on:
-  #     - sqlserver
-  #   networks:
-  #     - backend
+  product-service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
 
-  # identity-service:
-  #   build:
-  #     context: ../src/IdentityService
-  #   ports:
-  #     - "5003:8080"
-  #   environment:
-  #     ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=IdentityDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
-  #   depends_on:
-  #     - sqlserver
-  #   networks:
-  #     - backend
+  image-service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+  payment-service:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+  gateway:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development

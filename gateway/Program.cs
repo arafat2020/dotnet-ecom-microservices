@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi;
 using Shared.Protos.Auth;
 using Shared.Protos.Product;
+using Shared.Protos.Payment;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,12 +21,20 @@ builder.Services.AddControllers();
 // Register gRPC Clients
 builder.Services.AddGrpcClient<AuthService.AuthServiceClient>(o =>
 {
-    o.Address = new Uri("http://localhost:50011");
+    var url = builder.Configuration["GrpcUrls:AuthService"] ?? "http://localhost:50011";
+    o.Address = new Uri(url);
 });
 
 builder.Services.AddGrpcClient<ProductService.ProductServiceClient>(o =>
 {
-    o.Address = new Uri("http://localhost:50021");
+    var url = builder.Configuration["GrpcUrls:ProductService"] ?? "http://localhost:50021";
+    o.Address = new Uri(url);
+});
+
+builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
+{
+    var url = builder.Configuration["GrpcUrls:PaymentService"] ?? "http://localhost:50031";
+    o.Address = new Uri(url);
 });
 
 // Register Custom gRPC-based Authentication Handler

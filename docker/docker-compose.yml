@@ -1,5 +1,193 @@
 version: "3.9"
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Infrastructure
+# ──────────────────────────────────────────────────────────────────────────────
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${SA_PASSWORD}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"${SA_PASSWORD}\" -Q \"SELECT 1\" -No -C || exit 1"]
+      interval: 10s
+      retries: 15
+      start_period: 30s
+      timeout: 5s
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API endpoint
+      - "9001:9001"   # Web console
+    volumes:
+      - minio_data:/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+      timeout: 5s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s || exit 1"]
+      interval: 15s
+      retries: 10
+      start_period: 40s
+      timeout: 10s
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Microservices
+# ──────────────────────────────────────────────────────────────────────────────
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: services/auth-service/Dockerfile
+    container_name: auth-service
+    ports:
+      - "5001:5001"
+      - "50011:50011"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=AuthDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Jwt__Key: ${JWT_KEY}
+      AdminSeed__Email: ${ADMIN_EMAIL:-admin@ecom.local}
+      AdminSeed__Username: ${ADMIN_USERNAME:-admin}
+      AdminSeed__Password: ${ADMIN_PASSWORD:-Admin@12345}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: on-failure
+
+  product-service:
+    build:
+      context: ..
+      dockerfile: services/Product-service/Dockerfile
+    container_name: product-service
+    ports:
+      - "5002:5002"
+      - "50021:50021"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ProductDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Elasticsearch__Url: "http://elasticsearch:9200"
+      GrpcUrls__ImageService: "http://image-service:52051"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      image-service:
+        condition: service_started
+    networks:
+      - backend
+    restart: on-failure
+
+  image-service:
+    build:
+      context: ..
+      dockerfile: services/Image-service/Dockerfile
+    container_name: image-service
+    ports:
+      - "5205:5205"
+      - "52051:52051"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ImageDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Minio__Endpoint: "http://minio:9000"
+      Minio__AccessKey: minio
+      Minio__SecretKey: minio123
+      Minio__BucketName: images
+      Minio__PublicHost: "http://localhost:9000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: on-failure
+
+  payment-service:
+    build:
+      context: ..
+      dockerfile: services/payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "5003:5003"
+      - "50031:50031"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__UseMock: ${STRIPE_USE_MOCK:-true}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: on-failure
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "5999:5999"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      GrpcUrls__AuthService: "http://auth-service:50011"
+      GrpcUrls__ProductService: "http://product-service:50021"
+      GrpcUrls__PaymentService: "http://payment-service:50031"
+    depends_on:
+      - auth-service
+      - product-service
+      - payment-service
+    networks:
+      - backend
+    restart: on-failure
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Volumes & Networks
+# ──────────────────────────────────────────────────────────────────────────────
+volumes:
+  sql_data:
+  minio_data:
+  elasticsearch_data:
+
 networks:
   backend:
     driver: bridge
