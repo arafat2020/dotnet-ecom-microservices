@@ -70,6 +70,29 @@ message ProductResponse {
   string categoryId = 5;
 }
 
+message GetProductRequest {
+    string id = 1;
+}
+
+message ProductVariantDetail {
+    string id = 1;
+    string name = 2;
+    double price = 3;   // effective price: the variant override, or the product base price
+    int32 stock = 4;
+    string sku = 5;
+}
+
+message ProductDetailResponse {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    double basePrice = 4;
+    string categoryId = 5;
+    bool isActive = 6;
+    repeated ProductVariantDetail variants = 7;
+    repeated ProductImageMessage images = 8;
+}
+
 message SearchProductsRequest {
     string query = 1;
     int32 page = 2;
@@ -88,6 +111,8 @@ service ProductService {
     rpc GetCategories (GetCategoriesRequest) returns (GetCategoriesResponse);
 
     rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
+
+    rpc GetProduct (GetProductRequest) returns (ProductDetailResponse);
 
     rpc SearchProducts (SearchProductsRequest) returns (SearchProductsResponse);
 }

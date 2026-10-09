@@ -23,6 +23,7 @@
     <Protobuf Include="Protos\product.proto" GrpcServices="Both" />
     <Protobuf Include="Protos\image.proto" GrpcServices="Both" />
     <Protobuf Include="Protos\payment.proto" GrpcServices="Both" />
+    <Protobuf Include="Protos\order.proto" GrpcServices="Both" />
   </ItemGroup>
 
 </Project>

@@ -103,7 +103,7 @@ namespace Product_service.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImage");
+                    b.ToTable("productImages");
                 });
 
             modelBuilder.Entity("product_service.Model.ProductVariant", b =>

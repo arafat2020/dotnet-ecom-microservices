@@ -16,7 +16,7 @@ public static class AdminSeed
         await dbContext.Database.MigrateAsync();
 
         // ── 1. Ensure roles exist ────────────────────────────────────────────
-        var roleNames = new[] { "Admin", "User" };
+        var roleNames = new[] { "SuperAdmin", "Admin", "User" };
         foreach (var roleName in roleNames)
         {
             if (!await dbContext.Roles.AnyAsync(r => r.Name == roleName))
@@ -27,36 +27,61 @@ public static class AdminSeed
         await dbContext.SaveChangesAsync();
 
         // ── 2. Read admin credentials from config / env ──────────────────────
-        var adminEmail    = configuration["AdminSeed:Email"]    ?? "admin@ecom.local";
+        // Emails are stored lower-cased, the same way registration stores them
+        var adminEmail    = (configuration["AdminSeed:Email"]    ?? "admin@ecom.local").Trim().ToLowerInvariant();
         var adminUsername = configuration["AdminSeed:Username"] ?? "admin";
         var adminPassword = configuration["AdminSeed:Password"] ?? "Admin@12345";
 
-        // ── 3. Skip if the admin already exists ──────────────────────────────
-        if (await dbContext.Users.AnyAsync(u => u.Email == adminEmail))
+        // ── 3. Read super admin credentials from config / env ────────────────
+        var superAdminEmail    = (configuration["SuperAdminSeed:Email"]    ?? "superadmin@ecom.local").Trim().ToLowerInvariant();
+        var superAdminUsername = configuration["SuperAdminSeed:Username"] ?? "superadmin";
+        var superAdminPassword = configuration["SuperAdminSeed:Password"] ?? "SuperAdmin@12345";
+
+        // ── 4. Skip/create the admin user ────────────────────────────────────
+        if (!await dbContext.Users.AnyAsync(u => u.Email == adminEmail))
         {
-            Console.WriteLine("[AdminSeed] Admin user already exists – skipping.");
-            return;
+            var adminRole = await dbContext.Roles.FirstAsync(r => r.Name == "Admin");
+
+            var adminUser = new User
+            {
+                Username     = adminUsername,
+                Email        = adminEmail,
+                PasswordHash = AuthUtils.HashPassword(adminPassword),
+            };
+
+            adminUser.UserRoles.Add(new UserRole
+            {
+                User   = adminUser,
+                RoleId = adminRole.Id,
+            });
+
+            dbContext.Users.Add(adminUser);
+            Console.WriteLine($"[AdminSeed] Admin user '{adminUsername}' created successfully.");
         }
 
-        // ── 4. Create the admin user ─────────────────────────────────────────
-        var adminRole = await dbContext.Roles.FirstAsync(r => r.Name == "Admin");
-
-        var adminUser = new User
+        // ── 5. Skip/create the superadmin user ────────────────────────────────
+        if (!await dbContext.Users.AnyAsync(u => u.Email == superAdminEmail))
         {
-            Username     = adminUsername,
-            Email        = adminEmail,
-            PasswordHash = AuthUtils.HashPassword(adminPassword),
-        };
+            var superAdminRole = await dbContext.Roles.FirstAsync(r => r.Name == "SuperAdmin");
 
-        adminUser.UserRoles.Add(new UserRole
-        {
-            User   = adminUser,
-            RoleId = adminRole.Id,
-        });
+            var superAdminUser = new User
+            {
+                Username     = superAdminUsername,
+                Email        = superAdminEmail,
+                PasswordHash = AuthUtils.HashPassword(superAdminPassword),
+            };
 
-        dbContext.Users.Add(adminUser);
+            superAdminUser.UserRoles.Add(new UserRole
+            {
+                User   = superAdminUser,
+                RoleId = superAdminRole.Id,
+            });
+
+            dbContext.Users.Add(superAdminUser);
+            Console.WriteLine($"[AdminSeed] SuperAdmin user '{superAdminUsername}' created successfully.");
+        }
+
         await dbContext.SaveChangesAsync();
-
-        Console.WriteLine($"[AdminSeed] Admin user '{adminUsername}' created successfully.");
     }
 }
+

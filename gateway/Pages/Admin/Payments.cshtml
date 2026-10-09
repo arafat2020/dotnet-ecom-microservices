@@ -1,0 +1,338 @@
+@page
+@model gateway.Pages.Admin.PaymentsModel
+@{
+    ViewData["Title"] = "Payment Console";
+    ViewData["ActivePage"] = "Payments";
+}
+
+<div class="page-intro">
+    <p>Process payments, retrieve billing records, and view auto-generated invoices via the <strong>Payment Service</strong>.</p>
+</div>
+
+<div id="paymentTabs" data-tabs>
+    <div class="tabs">
+        <button class="tab-btn" data-tab="tab-process">Process Payment</button>
+        <button class="tab-btn" data-tab="tab-lookup">Lookup Payment</button>
+        <button class="tab-btn" data-tab="tab-invoice">View Invoice</button>
+    </div>
+
+    <!-- Process Payment Tab -->
+    <div class="tab-panel" id="tab-process">
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-title-icon" style="background:var(--warning-dark);color:var(--warning);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        Process Payment
+                    </div>
+                    <span class="badge badge-service">POST /api/payments/process</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="pay-orderid">Order ID</label>
+                    <input id="pay-orderid" class="form-control" type="text" placeholder="order-12345" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="pay-amount">Amount ($)</label>
+                        <input id="pay-amount" class="form-control" type="number" placeholder="99.99" step="0.01" min="0.01" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pay-method">Payment Method</label>
+                        <select id="pay-method" class="form-control" onchange="toggleStripeField()">
+                            <option value="cash_in">Cash In</option>
+                            <option value="stripe">Stripe</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="stripe-field-group" style="display:none;">
+                    <label class="form-label" for="pay-stripe-id">Stripe Payment Method ID</label>
+                    <input id="pay-stripe-id" class="form-control" type="text" placeholder="pm_xxxxxxxxxxxxx" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="pay-name">Customer Name</label>
+                        <input id="pay-name" class="form-control" type="text" placeholder="John Doe" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pay-email">Customer Email</label>
+                        <input id="pay-email" class="form-control" type="email" placeholder="john@example.com" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="pay-address">Billing Address</label>
+                    <input id="pay-address" class="form-control" type="text" placeholder="123 Main St, City, Country" />
+                </div>
+
+                <button class="btn btn-primary btn-full" id="processBtn" onclick="doProcessPayment()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                            <line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        Process Payment
+                    </span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Response</div>
+                    <button class="copy-btn" onclick="copyElement('processResult','Response')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div id="processResult" class="result-box">
+                    // Response will appear here…
+                </div>
+
+                <div class="divider"></div>
+                <div class="section-title" style="font-size:12px;">Payment ID</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div id="capturedPaymentId" class="code-block" style="flex:1;min-height:36px;">–</div>
+                    <button class="btn btn-sm btn-ghost" onclick="copyElement('capturedPaymentId','Payment ID')">Copy</button>
+                    <button class="btn btn-sm btn-success" onclick="usePaymentId()">Use</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lookup Tab -->
+    <div class="tab-panel" id="tab-lookup">
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-title-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </div>
+                        Lookup Payment
+                    </div>
+                    <span class="badge badge-service">GET /api/payments/{id}</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="lookup-id">Payment ID</label>
+                    <input id="lookup-id" class="form-control" type="text" placeholder="Enter payment ID…" />
+                </div>
+                <button class="btn btn-primary btn-full" id="lookupBtn" onclick="doLookup()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        Fetch Record
+                    </span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Billing Record</div>
+                    <button class="copy-btn" onclick="copyElement('lookupResult','Billing Record')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div id="lookupResult" class="result-box">// Response will appear here…</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:0;" id="lookupDetailsCard" style="display:none;">
+            <div class="card-header">
+                <div class="card-title">Payment Details</div>
+            </div>
+            <div id="lookupDetailsTable"></div>
+        </div>
+    </div>
+
+    <!-- Invoice Tab -->
+    <div class="tab-panel" id="tab-invoice">
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-title-icon" style="background:var(--success-dark);color:var(--success);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                        </div>
+                        Get Invoice
+                    </div>
+                    <span class="badge badge-service">GET /api/payments/{id}/invoice</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="invoice-id">Payment ID</label>
+                    <input id="invoice-id" class="form-control" type="text" placeholder="Enter payment ID…" />
+                </div>
+                <button class="btn btn-success btn-full" id="invoiceBtn" onclick="doGetInvoice()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Fetch Invoice
+                    </span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Invoice Response</div>
+                    <button class="copy-btn" onclick="copyElement('invoiceResult','Invoice')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div id="invoiceResult" class="result-box">// Response will appear here…</div>
+            </div>
+        </div>
+
+        <!-- Invoice Body Render -->
+        <div class="card" id="invoiceBodyCard" style="margin-top:0;display:none;">
+            <div class="card-header">
+                <div class="card-title">Invoice Preview</div>
+                <button class="copy-btn" onclick="copyToClipboard(lastInvoiceBody,'Invoice Body')">Copy Body</button>
+            </div>
+            <div id="invoiceBodyContent" style="background:white;color:#222;padding:24px;border-radius:8px;font-size:13px;line-height:1.8;"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let lastInvoiceBody = '';
+
+function toggleStripeField() {
+    const method = document.getElementById('pay-method').value;
+    document.getElementById('stripe-field-group').style.display = method === 'stripe' ? 'block' : 'none';
+}
+
+async function doProcessPayment() {
+    const orderId         = document.getElementById('pay-orderid').value.trim();
+    const amount          = parseFloat(document.getElementById('pay-amount').value);
+    const paymentMethod   = document.getElementById('pay-method').value;
+    const paymentMethodId = document.getElementById('pay-stripe-id').value.trim() || null;
+    const customerName    = document.getElementById('pay-name').value.trim();
+    const customerEmail   = document.getElementById('pay-email').value.trim();
+    const billingAddress  = document.getElementById('pay-address').value.trim();
+
+    if (!orderId || !amount || !customerName || !customerEmail || !billingAddress) {
+        showToast('All required fields must be filled.', 'error'); return;
+    }
+    if (paymentMethod === 'stripe' && !paymentMethodId) {
+        showToast('Stripe Payment Method ID is required.', 'error'); return;
+    }
+
+    setLoading('processBtn', true);
+    showLoading('processResult', 'Processing payment…');
+
+    const { ok, data } = await apiCall('/api/payments/process', {
+        method: 'POST',
+        body: JSON.stringify({ orderId, amount, paymentMethod, paymentMethodId, customerName, customerEmail, billingAddress })
+    });
+
+    setLoading('processBtn', false);
+    displayResult('processResult', data, ok);
+
+    if (ok && data?.data?.paymentId) {
+        document.getElementById('capturedPaymentId').textContent = data.data.paymentId;
+        showToast(`Payment processed! ID: ${data.data.paymentId}`, 'success');
+    } else {
+        showToast(data?.message || 'Payment failed.', 'error');
+    }
+}
+
+function usePaymentId() {
+    const id = document.getElementById('capturedPaymentId').textContent.trim();
+    if (!id || id === '–') { showToast('No payment ID captured.', 'error'); return; }
+    document.getElementById('lookup-id').value = id;
+    document.getElementById('invoice-id').value = id;
+    showToast('Payment ID filled in Lookup and Invoice tabs.', 'info');
+}
+
+async function doLookup() {
+    const id = document.getElementById('lookup-id').value.trim();
+    if (!id) { showToast('Please enter a Payment ID.', 'error'); return; }
+
+    setLoading('lookupBtn', true);
+    showLoading('lookupResult', 'Fetching billing record…');
+
+    const { ok, data } = await apiCall(`/api/payments/${encodeURIComponent(id)}`);
+
+    setLoading('lookupBtn', false);
+    displayResult('lookupResult', data, ok);
+
+    if (ok && data?.data) {
+        const d = data.data;
+        const card = document.getElementById('lookupDetailsCard');
+        card.style.display = 'block';
+        document.getElementById('lookupDetailsTable').innerHTML = `
+            <table class="data-table">
+                <tbody>
+                    <tr><th>Payment ID</th><td>${d.paymentId ?? '—'}</td></tr>
+                    <tr><th>Order ID</th><td>${d.orderId ?? '—'}</td></tr>
+                    <tr><th>Amount</th><td>$${d.amount ?? '—'}</td></tr>
+                    <tr><th>Method</th><td>${d.paymentMethod ?? '—'}</td></tr>
+                    <tr><th>Status</th><td><span class="status-badge status-${(d.status||'').toLowerCase().includes('complete') ? 'success' : 'pending'}">${d.status ?? '—'}</span></td></tr>
+                    <tr><th>Stripe Intent</th><td>${d.stripePaymentIntentId || '—'}</td></tr>
+                    <tr><th>Created At</th><td>${d.createdAt ?? '—'}</td></tr>
+                </tbody>
+            </table>`;
+        showToast('Billing record retrieved.', 'success');
+    } else {
+        document.getElementById('lookupDetailsCard').style.display = 'none';
+        showToast(data?.message || 'Record not found.', 'error');
+    }
+}
+
+async function doGetInvoice() {
+    const id = document.getElementById('invoice-id').value.trim();
+    if (!id) { showToast('Please enter a Payment ID.', 'error'); return; }
+
+    setLoading('invoiceBtn', true);
+    showLoading('invoiceResult', 'Fetching invoice…');
+
+    const { ok, data } = await apiCall(`/api/payments/${encodeURIComponent(id)}/invoice`);
+
+    setLoading('invoiceBtn', false);
+    displayResult('invoiceResult', data, ok);
+
+    if (ok && data?.data) {
+        const inv = data.data;
+        const card = document.getElementById('invoiceBodyCard');
+        card.style.display = 'block';
+        if (inv.invoiceBody) {
+            // Rendered in a sandboxed iframe: the body is HTML and must not run scripts in the dashboard
+            lastInvoiceBody = inv.invoiceBody;
+            const frame = document.createElement('iframe');
+            frame.setAttribute('sandbox', '');
+            frame.srcdoc = inv.invoiceBody;
+            frame.style.cssText = 'width:100%;height:640px;border:0;';
+            document.getElementById('invoiceBodyContent').replaceChildren(frame);
+        } else {
+            document.getElementById('invoiceBodyContent').textContent = 'No invoice body content.';
+        }
+        showToast(`Invoice #${inv.invoiceNumber} retrieved.`, 'success');
+    } else {
+        document.getElementById('invoiceBodyCard').style.display = 'none';
+        showToast(data?.message || 'Invoice not found.', 'error');
+    }
+}
+</script>
+}

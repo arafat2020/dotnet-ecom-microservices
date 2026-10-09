@@ -1,4 +1,5 @@
 using gateway.Models;
+using Grpc.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Protos.Product;
@@ -40,6 +41,79 @@ public class ProductController : ApiControllerBase
         {
             _logger.LogError(ex, "Error calling Product Service for search via gRPC.");
             return ApiInternalError("An internal error occurred while searching products.");
+        }
+    }
+
+    /// <summary>
+    /// Creates a new product with its variants and images. Only accessible by Admin and SuperAdmin users.
+    /// Upload the images first through <c>POST /api/images/upload</c> and pass the returned IDs and URLs.
+    /// </summary>
+    [HttpPost]
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    [ProducesResponseType(typeof(ApiResponse<ProductResponse>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Create([FromBody] CreateProductRequestDto request)
+    {
+        try
+        {
+            var grpcRequest = new CreateProductRequest
+            {
+                Name = request.Name,
+                Description = request.Description ?? string.Empty,
+                BasePrice = (double)request.BasePrice,
+                CategoryId = request.CategoryId
+            };
+
+            grpcRequest.Variants.AddRange(request.Variants.Select(v => new ProductVariantMessage
+            {
+                Name = v.Name,
+                Price = (double)(v.Price ?? 0),
+                Stock = v.Stock,
+                Sku = v.Sku ?? string.Empty
+            }));
+
+            grpcRequest.Images.AddRange(request.Images.Select(i => new ProductImageMessage
+            {
+                ImageFileId = i.ImageFileId,
+                Url = i.Url,
+                AltText = i.AltText ?? string.Empty,
+                IsPrimary = i.IsPrimary
+            }));
+
+            var response = await _productServiceClient.CreateProductAsync(grpcRequest);
+
+            return ApiCreated(response, "Product created successfully.");
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogWarning(ex, "gRPC error creating product: {Status}", ex.StatusCode);
+            return ApiRpcError(ex, "Product Service");
+        }
+    }
+
+    /// <summary>
+    /// Retrieves one product with its variants and images.
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<ProductDetailResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetById([FromRoute] Guid id)
+    {
+        try
+        {
+            var response = await _productServiceClient.GetProductAsync(new GetProductRequest { Id = id.ToString() });
+
+            return ApiOk(response, "Product retrieved successfully.");
+        }
+        catch (RpcException ex)
+        {
+            _logger.LogWarning(ex, "gRPC error retrieving product {Id}: {Status}", id, ex.StatusCode);
+            return ApiRpcError(ex, "Product Service");
         }
     }
 }

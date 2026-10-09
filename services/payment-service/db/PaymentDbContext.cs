@@ -21,6 +21,7 @@ namespace payment_service.db
             {
                 entity.HasKey(e => e.PaymentId);
                 entity.Property(e => e.OrderId).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.UserId).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.PaymentMethod).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.StripePaymentIntentId).HasMaxLength(100);

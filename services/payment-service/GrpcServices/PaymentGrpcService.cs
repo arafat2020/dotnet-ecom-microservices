@@ -32,7 +32,7 @@ namespace payment_service.GrpcServices
             {
                 var record = await _paymentService.ProcessPaymentAsync(
                     request.OrderId,
-                    (decimal)request.Amount,
+                    request.UserId,
                     request.PaymentMethod,
                     request.PaymentMethodId,
                     request.CustomerEmail,
@@ -53,6 +53,19 @@ namespace payment_service.GrpcServices
             {
                 _logger.LogWarning(ex, "Invalid argument in ProcessPayment: {Message}", ex.Message);
                 throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, ex.Message));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning("User {UserId} tried to pay Order {OrderId} of another user.", request.UserId, request.OrderId);
+                throw new RpcException(new Status(StatusCode.PermissionDenied, ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new RpcException(new Status(StatusCode.FailedPrecondition, ex.Message));
             }
             catch (Exception ex)
             {
@@ -79,7 +92,8 @@ namespace payment_service.GrpcServices
                     PaymentMethod = record.PaymentMethod,
                     Status = record.Status,
                     StripePaymentIntentId = record.StripePaymentIntentId ?? string.Empty,
-                    CreatedAt = record.CreatedAt.ToString("o")
+                    CreatedAt = record.CreatedAt.ToString("o"),
+                    UserId = record.UserId
                 };
             }
             catch (RpcException)
@@ -103,6 +117,8 @@ namespace payment_service.GrpcServices
                     throw new RpcException(new Status(StatusCode.NotFound, $"Invoice for Payment ID {request.PaymentId} was not found."));
                 }
 
+                var payment = await _paymentService.GetPaymentDetailsAsync(invoice.PaymentRecordId);
+
                 return new GetInvoiceResponse
                 {
                     InvoiceId = invoice.InvoiceId,
@@ -113,7 +129,8 @@ namespace payment_service.GrpcServices
                     BillingAddress = invoice.BillingAddress,
                     Amount = (double)invoice.Amount,
                     InvoiceBody = invoice.InvoiceBody,
-                    CreatedAt = invoice.CreatedAt.ToString("o")
+                    CreatedAt = invoice.CreatedAt.ToString("o"),
+                    UserId = payment?.UserId ?? string.Empty
                 };
             }
             catch (RpcException)

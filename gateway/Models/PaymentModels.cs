@@ -8,17 +8,10 @@ namespace gateway.Models
     public class ProcessPaymentRequestDto
     {
         /// <summary>
-        /// The ID of the associated order.
+        /// The ID of the order to pay. The amount charged is the order total.
         /// </summary>
         [Required]
         public string OrderId { get; set; } = null!;
-
-        /// <summary>
-        /// The payment amount. Must be greater than zero.
-        /// </summary>
-        [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
-        public decimal Amount { get; set; }
 
         /// <summary>
         /// The payment method. Allowed values: "cash_in" or "stripe".

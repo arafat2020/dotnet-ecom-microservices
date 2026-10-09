@@ -18,6 +18,11 @@ namespace payment_service.Model
         public string OrderId { get; set; } = string.Empty;
 
         /// <summary>
+        /// The ID of the user who made the payment. Empty for records created before users were tracked.
+        /// </summary>
+        public string UserId { get; set; } = string.Empty;
+
+        /// <summary>
         /// The payment amount.
         /// </summary>
         public decimal Amount { get; set; }

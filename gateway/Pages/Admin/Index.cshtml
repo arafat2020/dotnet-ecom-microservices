@@ -1,0 +1,197 @@
+@page
+@model gateway.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActivePage"] = "Index";
+}
+
+<div class="page-intro">
+    <p>Welcome to the <strong>EcomAdmin</strong> control panel. Monitor all microservice endpoints and interact with the API gateway from one unified interface.</p>
+</div>
+
+<!-- Stat cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Auth Service</div>
+            <div class="stat-value" id="authStatus">–</div>
+            <div class="stat-sub">Register · Login</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Product Service</div>
+            <div class="stat-value" id="productStatus">–</div>
+            <div class="stat-sub">Search · Categories</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-yellow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">Payment Service</div>
+            <div class="stat-value" id="paymentStatus">–</div>
+            <div class="stat-sub">Process · Invoice</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+            </svg>
+        </div>
+        <div class="stat-info">
+            <div class="stat-label">API Gateway</div>
+            <div class="stat-value" style="font-size:16px;color:var(--text-secondary)">:5999</div>
+            <div class="stat-sub">REST → gRPC proxy</div>
+        </div>
+    </div>
+</div>
+
+<!-- Service health cards -->
+<div class="section-title">Microservice Health</div>
+<div class="service-health-grid" style="margin-bottom:28px;">
+    <div class="service-health-card" id="authHealthCard">
+        <div class="health-icon" style="background:var(--accent-dark);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+        </div>
+        <div class="health-name">Auth Service</div>
+        <div class="health-url">grpc://localhost:50011</div>
+        <div class="health-status" id="authHealthStatus" style="color:var(--text-muted)">Checking…</div>
+    </div>
+    <div class="service-health-card" id="productHealthCard">
+        <div class="health-icon" style="background:var(--success-dark);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+        </div>
+        <div class="health-name">Product Service</div>
+        <div class="health-url">grpc://localhost:50021</div>
+        <div class="health-status" id="productHealthStatus" style="color:var(--text-muted)">Checking…</div>
+    </div>
+    <div class="service-health-card" id="paymentHealthCard">
+        <div class="health-icon" style="background:var(--warning-dark);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+        </div>
+        <div class="health-name">Payment Service</div>
+        <div class="health-url">grpc://localhost:50031</div>
+        <div class="health-status" id="paymentHealthStatus" style="color:var(--text-muted)">Checking…</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-title">Quick Actions</div>
+<div class="content-grid cols-3">
+    <a href="/Admin/Auth" class="card" style="text-decoration:none;cursor:pointer;">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="card-title-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                Auth Management
+            </div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;">Register new users and authenticate with the Auth Service. Capture and store JWT tokens.</p>
+        <div style="margin-top:14px;">
+            <span class="badge badge-service">POST /api/auth/register</span>
+        </div>
+    </a>
+    <a href="/Admin/Products" class="card" style="text-decoration:none;cursor:pointer;">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="card-title-icon" style="background:var(--success-dark);color:var(--success);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                Product Explorer
+            </div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;">Search the product catalog with full pagination support.</p>
+        <div style="margin-top:14px;">
+            <span class="badge badge-service">GET /api/products/search</span>
+        </div>
+    </a>
+    <a href="/Admin/Payments" class="card" style="text-decoration:none;cursor:pointer;">
+        <div class="card-header">
+            <div class="card-title">
+                <div class="card-title-icon" style="background:var(--warning-dark);color:var(--warning);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                Payment Console
+            </div>
+        </div>
+        <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;">Process payments, retrieve billing records and auto-generated invoices.</p>
+        <div style="margin-top:14px;">
+            <span class="badge badge-service">POST /api/payments/process</span>
+        </div>
+    </a>
+</div>
+
+<!-- API Reference Summary -->
+<div style="margin-top:28px;">
+    <div class="section-title">API Endpoint Reference</div>
+    <div class="card">
+        <table class="data-table">
+            <thead>
+                <tr><th>Method</th><th>Endpoint</th><th>Service</th><th>Auth</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="status-badge" style="background:#1e3a5f;color:#60a5fa;">POST</span></td><td><code>/api/auth/register</code></td><td>Auth</td><td>Public</td><td>Register a new user</td></tr>
+                <tr><td><span class="status-badge" style="background:#1e3a5f;color:#60a5fa;">POST</span></td><td><code>/api/auth/login</code></td><td>Auth</td><td>Public</td><td>Login and get JWT token</td></tr>
+                <tr><td><span class="status-badge" style="background:#1a3a2a;color:#4ade80;">GET</span></td><td><code>/api/products/search</code></td><td>Product</td><td>Public</td><td>Search products by query</td></tr>
+                <tr><td><span class="status-badge" style="background:#1a3a2a;color:#4ade80;">GET</span></td><td><code>/api/categories</code></td><td>Product</td><td>Public</td><td>List all categories</td></tr>
+                <tr><td><span class="status-badge" style="background:#1e3a5f;color:#60a5fa;">POST</span></td><td><code>/api/categories</code></td><td>Product</td><td>Admin JWT</td><td>Create a new category</td></tr>
+                <tr><td><span class="status-badge" style="background:#1e3a5f;color:#60a5fa;">POST</span></td><td><code>/api/payments/process</code></td><td>Payment</td><td>Public</td><td>Process a payment</td></tr>
+                <tr><td><span class="status-badge" style="background:#1a3a2a;color:#4ade80;">GET</span></td><td><code>/api/payments/{id}</code></td><td>Payment</td><td>Public</td><td>Get payment billing record</td></tr>
+                <tr><td><span class="status-badge" style="background:#1a3a2a;color:#4ade80;">GET</span></td><td><code>/api/payments/{id}/invoice</code></td><td>Payment</td><td>Public</td><td>Get invoice for a payment</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// Probe each service via the gateway endpoints
+async function probeService(url, statusId, cardId, statId) {
+    try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+        // Any response (even error) means the gateway reached it
+        const ok = res.status < 500;
+        document.getElementById(statusId).textContent = ok ? 'Online' : 'Degraded';
+        document.getElementById(statusId).style.color = ok ? 'var(--success)' : 'var(--warning)';
+        document.getElementById(statId).textContent = ok ? 'Online' : 'Degraded';
+        document.getElementById(statId).style.color = ok ? 'var(--success)' : 'var(--warning)';
+    } catch {
+        document.getElementById(statusId).textContent = 'Offline';
+        document.getElementById(statusId).style.color = 'var(--danger)';
+        document.getElementById(statId).textContent = 'Offline';
+        document.getElementById(statId).style.color = 'var(--danger)';
+    }
+}
+
+// Probe using lightweight calls
+probeService('/api/auth/login', 'authHealthStatus', 'authHealthCard', 'authStatus');
+probeService('/api/products/search?query=test&page=1&pageSize=1', 'productHealthStatus', 'productHealthCard', 'productStatus');
+probeService('/api/payments/health-probe-nonexistent-id', 'paymentHealthStatus', 'paymentHealthCard', 'paymentStatus');
+</script>
+}

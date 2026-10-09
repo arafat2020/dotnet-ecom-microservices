@@ -1,0 +1,117 @@
+@page
+@model gateway.Pages.Admin.LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "SuperAdmin Login";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SuperAdmin Login — EcomAdmin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/admin.css" />
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            z-index: 10;
+        }
+        .login-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .login-logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .login-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: -6px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated background -->
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <div class="login-card card">
+        <div class="login-logo">
+            <div class="logo-icon" style="width: 48px; height: 48px; font-size: 20px;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <span class="login-logo-text">EcomAdmin</span>
+        </div>
+
+        <h2 class="login-subtitle">SuperAdmin Control Panel Access</h2>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger" style="margin-bottom: 20px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>@Model.ErrorMessage</span>
+            </div>
+        }
+
+        <form method="post">
+            <div class="form-group">
+                <label class="form-label" asp-for="Input.Email">Email Address</label>
+                <input class="form-control" type="email" asp-for="Input.Email" placeholder="superadmin@ecom.local" required />
+                <span asp-validation-for="Input.Email" style="color:var(--danger); font-size:12px;"></span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label" asp-for="Input.Password">Password</label>
+                <input class="form-control" type="password" asp-for="Input.Password" placeholder="••••••••" required />
+                <span asp-validation-for="Input.Password" style="color:var(--danger); font-size:12px;"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
+                <span>Authenticate</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <polyline points="10 17 15 12 10 7"/>
+                    <line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div style="font-size:11px;color:var(--text-muted);text-align:center;">
+            Default Dev Credentials:<br />
+            <strong>superadmin@ecom.local</strong> / <strong>SuperAdmin@@12345</strong>
+        </div>
+    </div>
+
+</body>
+</html>

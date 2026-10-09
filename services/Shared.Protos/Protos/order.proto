@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+option csharp_namespace = "Shared.Protos.Order";
+
+package order;
+
+// One line of an order to be created
+message OrderItemRequest {
+    string productId = 1;
+    string variantId = 2;         // required when the product has variants
+    int32 quantity = 3;
+}
+
+// Request to create an order. Prices are looked up in the Product Service, never sent by the client.
+message CreateOrderRequest {
+    string userId = 1;
+    repeated OrderItemRequest items = 2;
+    string shippingAddress = 3;
+}
+
+message OrderItemMessage {
+    string productId = 1;
+    string variantId = 2;
+    string productName = 3;
+    string variantName = 4;
+    double unitPrice = 5;
+    int32 quantity = 6;
+    double lineTotal = 7;
+}
+
+message OrderResponse {
+    string id = 1;
+    string userId = 2;
+    string status = 3;            // "Pending", "Paid", "Cancelled"
+    double total = 4;
+    string shippingAddress = 5;
+    string paymentId = 6;
+    string createdAt = 7;         // ISO 8601 string
+    repeated OrderItemMessage items = 8;
+}
+
+message GetOrderRequest {
+    string orderId = 1;
+}
+
+message ListOrdersRequest {
+    string userId = 1;
+    int32 page = 2;
+    int32 pageSize = 3;
+}
+
+message ListOrdersResponse {
+    repeated OrderResponse orders = 1;
+    int64 totalCount = 2;
+}
+
+// Sent by the Payment Service once a payment for the order has completed
+message MarkOrderPaidRequest {
+    string orderId = 1;
+    string paymentId = 2;
+}
+
+// The Order Service definition
+service OrderService {
+    rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+    rpc GetOrder (GetOrderRequest) returns (OrderResponse);
+    rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
+    rpc MarkOrderPaid (MarkOrderPaidRequest) returns (OrderResponse);
+}

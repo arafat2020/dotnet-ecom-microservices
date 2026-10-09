@@ -84,6 +84,9 @@ services:
       AdminSeed__Email: ${ADMIN_EMAIL:-admin@ecom.local}
       AdminSeed__Username: ${ADMIN_USERNAME:-admin}
       AdminSeed__Password: ${ADMIN_PASSWORD:-Admin@12345}
+      SuperAdminSeed__Email: ${SUPERADMIN_EMAIL:-superadmin@ecom.local}
+      SuperAdminSeed__Username: ${SUPERADMIN_USERNAME:-superadmin}
+      SuperAdminSeed__Password: ${SUPERADMIN_PASSWORD:?Set SUPERADMIN_PASSWORD in docker/.env}
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -153,9 +156,33 @@ services:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
       Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
       Stripe__UseMock: ${STRIPE_USE_MOCK:-true}
+      GrpcUrls__OrderService: "http://order-service:50041"
     depends_on:
       sqlserver:
         condition: service_healthy
+      order-service:
+        condition: service_started
+    networks:
+      - backend
+    restart: on-failure
+
+  order-service:
+    build:
+      context: ..
+      dockerfile: services/order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "5004:5004"
+      - "50041:50041"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=OrderDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True"
+      GrpcUrls__ProductService: "http://product-service:50021"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      product-service:
+        condition: service_started
     networks:
       - backend
     restart: on-failure
@@ -172,10 +199,14 @@ services:
       GrpcUrls__AuthService: "http://auth-service:50011"
       GrpcUrls__ProductService: "http://product-service:50021"
       GrpcUrls__PaymentService: "http://payment-service:50031"
+      GrpcUrls__OrderService: "http://order-service:50041"
+      ServiceUrls__ImageService: "http://image-service:5205"
     depends_on:
       - auth-service
       - product-service
       - payment-service
+      - order-service
+      - image-service
     networks:
       - backend
     restart: on-failure

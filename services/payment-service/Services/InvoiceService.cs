@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,12 @@ namespace payment_service.Services
 
         private string GenerateInvoiceHtmlBody(string invoiceNumber, PaymentRecord paymentRecord, string customerEmail, string customerName, string billingAddress)
         {
+            // Customer-supplied values are HTML-encoded: the body is rendered as HTML by clients
+            customerName = WebUtility.HtmlEncode(customerName);
+            customerEmail = WebUtility.HtmlEncode(customerEmail);
+            billingAddress = WebUtility.HtmlEncode(billingAddress);
+            var orderId = WebUtility.HtmlEncode(paymentRecord.OrderId);
+
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE html>");
             sb.AppendLine("<html>");
@@ -94,7 +101,7 @@ namespace payment_service.Services
             sb.AppendLine("    <div class='details-column' style='text-align: right;'>");
             sb.AppendLine("      <strong>Payment Details:</strong><br/>");
             sb.AppendLine($"      Payment ID: {paymentRecord.PaymentId}<br/>");
-            sb.AppendLine($"      Method: {paymentRecord.PaymentMethod.ToUpper()}<br/>");
+            sb.AppendLine($"      Method: {WebUtility.HtmlEncode(paymentRecord.PaymentMethod.ToUpper())}<br/>");
             sb.AppendLine($"      Status: {paymentRecord.Status}<br/>");
             if (!string.IsNullOrEmpty(paymentRecord.StripePaymentIntentId))
             {
@@ -111,7 +118,7 @@ namespace payment_service.Services
             sb.AppendLine("    </thead>");
             sb.AppendLine("    <tbody>");
             sb.AppendLine("      <tr>");
-            sb.AppendLine($"        <td>E-Commerce Purchase (Order: {paymentRecord.OrderId})</td>");
+            sb.AppendLine($"        <td>E-Commerce Purchase (Order: {orderId})</td>");
             sb.AppendLine($"        <td style='text-align: right;'>${paymentRecord.Amount:F2}</td>");
             sb.AppendLine("      </tr>");
             sb.AppendLine("    </tbody>");

@@ -4,11 +4,12 @@ using Microsoft.OpenApi;
 using Shared.Protos.Auth;
 using Shared.Protos.Product;
 using Shared.Protos.Payment;
+using Shared.Protos.Order;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Gateway to listen on Port 5000
+// Configure Gateway to listen on Port 5999
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(5999);
@@ -17,6 +18,25 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+
+// Add Razor Pages for the Admin Dashboard
+builder.Services.AddRazorPages();
+
+// Add Session for JWT token storage across dashboard pages
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(8);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Register a named HttpClient that calls the gateway itself
+builder.Services.AddHttpClient("GatewayClient", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5999");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 // Register gRPC Clients
 builder.Services.AddGrpcClient<AuthService.AuthServiceClient>(o =>
@@ -35,6 +55,19 @@ builder.Services.AddGrpcClient<PaymentService.PaymentServiceClient>(o =>
 {
     var url = builder.Configuration["GrpcUrls:PaymentService"] ?? "http://localhost:50031";
     o.Address = new Uri(url);
+});
+
+builder.Services.AddGrpcClient<OrderService.OrderServiceClient>(o =>
+{
+    var url = builder.Configuration["GrpcUrls:OrderService"] ?? "http://localhost:50041";
+    o.Address = new Uri(url);
+});
+
+// HttpClient for the Image Service REST API (file uploads are proxied over HTTP, not gRPC)
+builder.Services.AddHttpClient("ImageService", client =>
+{
+    var url = builder.Configuration["ServiceUrls:ImageService"] ?? "http://localhost:5205";
+    client.BaseAddress = new Uri(url);
 });
 
 // Register Custom gRPC-based Authentication Handler
@@ -83,8 +116,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseStaticFiles();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapRazorPages();
+
+// Redirect root to admin dashboard
+app.MapGet("/", () => Results.Redirect("/Admin"));
 
 app.Run();

@@ -63,6 +63,31 @@ builder.Services.AddGrpcClient<ImageService.ImageServiceClient>(options =>
 
 var app = builder.Build();
 
+// Auto-migrate database on startup with retries
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ProductDbContext>();
+    int retries = 10;
+    while (retries > 0)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            if (retries == 0)
+            {
+                throw;
+            }
+            Console.WriteLine($"Database migration failed. Retrying in 5 seconds... ({retries} retries remaining). Error: {ex.Message}");
+            await Task.Delay(5000);
+        }
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -71,7 +96,6 @@ if (app.Environment.IsDevelopment())
 
 // Configure the HTTP request pipeline.
 app.MapControllers();
-app.MapGrpcService<CategoryGrpcService>();
 app.MapGrpcService<ProductGrpcService>();
 
 app.Run();

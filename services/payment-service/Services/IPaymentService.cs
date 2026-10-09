@@ -10,10 +10,16 @@ namespace payment_service.Services
     {
         /// <summary>
         /// Processes a payment (via Cash In or Stripe) and registers the billing record.
+        /// The amount is read from the order; the order must be Pending and belong to <paramref name="userId"/>.
+        /// A declined payment is returned as a record with status "Failed".
         /// </summary>
+        /// <exception cref="ArgumentException">The payment method is not supported.</exception>
+        /// <exception cref="KeyNotFoundException">The order does not exist.</exception>
+        /// <exception cref="UnauthorizedAccessException">The order belongs to another user.</exception>
+        /// <exception cref="InvalidOperationException">The order is not Pending or is already paid.</exception>
         Task<PaymentRecord> ProcessPaymentAsync(
             string orderId, 
-            decimal amount, 
+            string userId, 
             string paymentMethod, 
             string paymentMethodId, 
             string customerEmail, 

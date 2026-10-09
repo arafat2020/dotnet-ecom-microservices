@@ -4,15 +4,18 @@ option csharp_namespace = "Shared.Protos.Payment";
 
 package payment;
 
-// Request to process a payment (either Cash In or Stripe)
+// Request to process a payment (either Cash In or Stripe).
+// The amount is not sent by the caller: the Payment Service reads it from the order.
 message ProcessPaymentRequest {
+    reserved 2;
+    reserved "amount";
     string orderId = 1;
-    double amount = 2;
     string paymentMethod = 3;     // "cash_in" or "stripe"
     string paymentMethodId = 4;   // Stripe token/payment method ID (optional for Stripe)
     string customerEmail = 5;
     string customerName = 6;
     string billingAddress = 7;
+    string userId = 8;            // Authenticated user making the payment; must own the order
 }
 
 // Response from processing a payment
@@ -38,6 +41,7 @@ message GetPaymentDetailsResponse {
     string status = 5;
     string stripePaymentIntentId = 6;
     string createdAt = 7;         // ISO 8601 string
+    string userId = 8;
 }
 
 // Request to retrieve the invoice associated with a payment
@@ -56,6 +60,7 @@ message GetInvoiceResponse {
     double amount = 7;
     string invoiceBody = 8;       // Structured text/HTML representation of the invoice
     string createdAt = 9;         // ISO 8601 string
+    string userId = 10;
 }
 
 // The Payment Service definition

@@ -1,0 +1,230 @@
+@page
+@model gateway.Pages.Admin.AuthModel
+@{
+    ViewData["Title"] = "Auth Service";
+    ViewData["ActivePage"] = "Auth";
+}
+
+<div class="page-intro">
+    <p>Interact with the <strong>Auth microservice</strong> via the gateway. Register new users or authenticate existing ones — JWT tokens are auto-saved to your session.</p>
+</div>
+
+<!-- Tabs -->
+<div id="authTabs" data-tabs style="margin-bottom:0;">
+    <div class="tabs">
+        <button class="tab-btn" data-tab="tab-register" id="tab-register-btn">
+            Register User
+        </button>
+        <button class="tab-btn" data-tab="tab-login" id="tab-login-btn">
+            Login
+        </button>
+    </div>
+
+    <!-- Register Tab -->
+    <div class="tab-panel" id="tab-register">
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-title-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <line x1="19" y1="8" x2="19" y2="14"/>
+                                <line x1="22" y1="11" x2="16" y2="11"/>
+                            </svg>
+                        </div>
+                        Register New User
+                    </div>
+                    <span class="badge badge-service">POST /api/auth/register</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg-username">Username</label>
+                    <input id="reg-username" class="form-control" type="text" placeholder="johndoe" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-email">Email</label>
+                    <input id="reg-email" class="form-control" type="email" placeholder="john@example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-password">Password</label>
+                    <input id="reg-password" class="form-control" type="password" placeholder="••••••••" />
+                </div>
+
+                <button class="btn btn-primary btn-full" id="registerBtn" onclick="doRegister()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <line x1="19" y1="8" x2="19" y2="14"/>
+                            <line x1="22" y1="11" x2="16" y2="11"/>
+                        </svg>
+                        Register User
+                    </span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Response</div>
+                    <button class="copy-btn" onclick="copyElement('registerResult', 'Response')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div id="registerResult" class="result-box">
+                    // Response will appear here…
+                </div>
+
+                <div class="divider"></div>
+                <div class="section-title" style="font-size:12px;">Captured Token</div>
+                <div id="registerToken" class="code-block" style="min-height:48px;word-break:break-all;">
+                    –
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button class="btn btn-sm btn-ghost" onclick="copyElement('registerToken','JWT Token')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy Token
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="useToken('registerToken')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="20 6 9 17 4 12"/></svg>
+                        Use Token
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Tab -->
+    <div class="tab-panel" id="tab-login">
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-title-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                                <polyline points="10 17 15 12 10 7"/>
+                                <line x1="15" y1="12" x2="3" y2="12"/>
+                            </svg>
+                        </div>
+                        Login
+                    </div>
+                    <span class="badge badge-service">POST /api/auth/login</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email</label>
+                    <input id="login-email" class="form-control" type="email" placeholder="john@example.com" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <input id="login-password" class="form-control" type="password" placeholder="••••••••" />
+                </div>
+
+                <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">
+                    <div class="spinner"></div>
+                    <span class="btn-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        Login
+                    </span>
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Response</div>
+                    <button class="copy-btn" onclick="copyElement('loginResult', 'Response')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div id="loginResult" class="result-box">
+                    // Response will appear here…
+                </div>
+
+                <div class="divider"></div>
+                <div class="section-title" style="font-size:12px;">Captured Token</div>
+                <div id="loginToken" class="code-block" style="min-height:48px;word-break:break-all;">
+                    –
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <button class="btn btn-sm btn-ghost" onclick="copyElement('loginToken','JWT Token')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        Copy Token
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="useToken('loginToken')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;"><polyline points="20 6 9 17 4 12"/></svg>
+                        Use Token
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+async function doRegister() {
+    const username = document.getElementById('reg-username').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    if (!username || !email || !password) { showToast('All fields are required.', 'error'); return; }
+
+    setLoading('registerBtn', true);
+    showLoading('registerResult', 'Calling Auth Service…');
+
+    const { ok, data } = await apiCall('/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ username, email, password })
+    });
+
+    setLoading('registerBtn', false);
+    displayResult('registerResult', data, ok);
+
+    if (ok && data?.data?.token) {
+        document.getElementById('registerToken').textContent = data.data.token;
+        showToast('User registered! Token captured.', 'success');
+    } else {
+        showToast(data?.message || 'Registration failed.', 'error');
+    }
+}
+
+async function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) { showToast('Email and password are required.', 'error'); return; }
+
+    setLoading('loginBtn', true);
+    showLoading('loginResult', 'Authenticating…');
+
+    const { ok, data } = await apiCall('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    });
+
+    setLoading('loginBtn', false);
+    displayResult('loginResult', data, ok);
+
+    if (ok && data?.data?.token) {
+        document.getElementById('loginToken').textContent = data.data.token;
+        showToast('Login successful! Token captured.', 'success');
+    } else {
+        showToast(data?.message || 'Login failed.', 'error');
+    }
+}
+
+function useToken(tokenElId) {
+    const token = document.getElementById(tokenElId)?.textContent?.trim();
+    if (!token || token === '–') { showToast('No token to use.', 'error'); return; }
+    document.getElementById('globalToken').value = token;
+    saveToken();
+}
+</script>
+}

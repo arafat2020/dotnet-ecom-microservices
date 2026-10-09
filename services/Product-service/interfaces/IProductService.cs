@@ -4,4 +4,5 @@ namespace product_service.Interfaces;
 public interface IProductService
 {
     Task<ProductResponseDto> CreateAsync(CreateProductDto dto);
+    Task<ProductDetailDto?> GetByIdAsync(Guid id);
 }

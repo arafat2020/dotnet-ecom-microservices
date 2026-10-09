@@ -28,7 +28,7 @@ public class ProductService : IProductService
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
     {
         var categoryExists = await _context.categories.AnyAsync(c => c.Id == dto.CategoryId);
-        if (!categoryExists) throw new Exception("Category not found");
+        if (!categoryExists) throw new KeyNotFoundException("Category not found");
 
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -134,5 +134,34 @@ public class ProductService : IProductService
 
     }
 
-    // Implement product-related operations here, e.g. CreateProduct, GetProductById, etc.
+    public async Task<ProductDetailDto?> GetByIdAsync(Guid id)
+    {
+        return await _context.products
+            .Where(p => p.Id == id)
+            .Select(p => new ProductDetailDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                BasePrice = p.BasePrice,
+                CategoryId = p.CategoryId,
+                IsActive = p.IsActive,
+                Variants = p.Variants.Select(v => new ProductVariantDetailDto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Price = v.Price ?? p.BasePrice,
+                    Stock = v.Stock,
+                    SKU = v.SKU
+                }).ToList(),
+                Images = p.Images.Select(i => new CreateProductImageDto
+                {
+                    ImageFileId = i.ImageFileId,
+                    Url = i.Url,
+                    AltText = i.AltText,
+                    IsPrimary = i.IsPrimary
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
+    }
 }

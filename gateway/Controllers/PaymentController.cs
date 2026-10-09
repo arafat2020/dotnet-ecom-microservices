@@ -31,16 +31,27 @@ namespace gateway.Controllers
         /// <summary>
         /// Processes a payment transaction (via Stripe or Cash In) and creates a billing record.
         /// Automatically generates an invoice on successful processing.
+        /// The order must belong to the authenticated user; the amount charged is the order total.
         /// </summary>
         /// <param name="request">The payment processing parameters.</param>
         /// <returns>A response indicating payment outcome and ID.</returns>
         /// <response code="200">Payment successfully processed.</response>
         /// <response code="400">Request validation error or unsupported parameters.</response>
+        /// <response code="401">No valid token was provided.</response>
+        /// <response code="402">The payment was declined.</response>
+        /// <response code="403">The order belongs to another user.</response>
+        /// <response code="404">The order was not found.</response>
+        /// <response code="409">The order is already paid or cannot be paid.</response>
         /// <response code="500">Internal communication error with the Payment Service.</response>
         [HttpPost("process")]
-        [AllowAnonymous]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<ProcessPaymentResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ApiResponse<ProcessPaymentResponseDto>), StatusCodes.Status402PaymentRequired)]
+        [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Process([FromBody] ProcessPaymentRequestDto request)
         {
@@ -54,7 +65,7 @@ namespace gateway.Controllers
                 var grpcRequest = new ProcessPaymentRequest
                 {
                     OrderId = request.OrderId,
-                    Amount = (double)request.Amount,
+                    UserId = CurrentUserId,
                     PaymentMethod = request.PaymentMethod,
                     PaymentMethodId = request.PaymentMethodId ?? string.Empty,
                     CustomerEmail = request.CustomerEmail,
@@ -79,18 +90,19 @@ namespace gateway.Controllers
                 }
                 else
                 {
-                    return ApiOk(resultDto, $"Payment processing failed with status: {response.Status}");
+                    return StatusCode(StatusCodes.Status402PaymentRequired, new ApiResponse<ProcessPaymentResponseDto>
+                    {
+                        Success = false,
+                        StatusCode = StatusCodes.Status402PaymentRequired,
+                        Message = $"Payment processing failed with status: {response.Status}",
+                        Data = resultDto
+                    });
                 }
-            }
-            catch (RpcException ex) when (ex.StatusCode == GrpcStatusCode.InvalidArgument)
-            {
-                _logger.LogWarning(ex, "gRPC invalid argument error in payment process.");
-                return ApiBadRequest(ex.Status.Detail);
             }
             catch (RpcException ex)
             {
-                _logger.LogError(ex, "gRPC communication error during payment processing.");
-                return ApiInternalError($"Payment service unavailable: {ex.Status.Detail}");
+                _logger.LogWarning(ex, "gRPC error during payment processing: {Status}", ex.StatusCode);
+                return ApiRpcError(ex, "Payment Service");
             }
             catch (Exception ex)
             {
@@ -105,10 +117,12 @@ namespace gateway.Controllers
         /// <param name="id">The unique payment ID.</param>
         /// <returns>A response enclosing the billing record details.</returns>
         /// <response code="200">Payment record successfully retrieved.</response>
+        /// <response code="401">No valid token was provided.</response>
+        /// <response code="403">The payment belongs to another user.</response>
         /// <response code="404">Payment record not found.</response>
         /// <response code="500">Internal communication error.</response>
         [HttpGet("{id}")]
-        [AllowAnonymous]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<PaymentRecordDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
@@ -118,6 +132,11 @@ namespace gateway.Controllers
             {
                 var grpcRequest = new GetPaymentDetailsRequest { PaymentId = id };
                 var response = await _paymentServiceClient.GetPaymentDetailsAsync(grpcRequest);
+
+                if (!IsAdmin && response.UserId != CurrentUserId)
+                {
+                    return ApiForbidden("You do not have access to this payment.");
+                }
 
                 var dto = new PaymentRecordDto
                 {
@@ -155,10 +174,12 @@ namespace gateway.Controllers
         /// <param name="id">The unique payment ID.</param>
         /// <returns>A response enclosing the invoice details.</returns>
         /// <response code="200">Invoice successfully retrieved.</response>
+        /// <response code="401">No valid token was provided.</response>
+        /// <response code="403">The invoice belongs to another user.</response>
         /// <response code="404">Invoice not found for the given payment.</response>
         /// <response code="500">Internal communication error.</response>
         [HttpGet("{id}/invoice")]
-        [AllowAnonymous]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<InvoiceDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status500InternalServerError)]
@@ -168,6 +189,11 @@ namespace gateway.Controllers
             {
                 var grpcRequest = new GetInvoiceRequest { PaymentId = id };
                 var response = await _paymentServiceClient.GetInvoiceAsync(grpcRequest);
+
+                if (!IsAdmin && response.UserId != CurrentUserId)
+                {
+                    return ApiForbidden("You do not have access to this invoice.");
+                }
 
                 var dto = new InvoiceDto
                 {

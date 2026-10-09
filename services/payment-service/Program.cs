@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using payment_service.db;
 using payment_service.GrpcServices;
 using payment_service.Services;
+using Shared.Protos.Order;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,13 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+});
+
+// Order Service client, used to read the order amount and mark the order as paid
+builder.Services.AddGrpcClient<OrderService.OrderServiceClient>(o =>
+{
+    var url = builder.Configuration["GrpcUrls:OrderService"] ?? "http://localhost:50041";
+    o.Address = new Uri(url);
 });
 
 // Register application-specific services

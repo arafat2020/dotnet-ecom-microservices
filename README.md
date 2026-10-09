@@ -8,11 +8,22 @@ The project follows a microservice architecture where the **API Gateway** commun
 
 ```mermaid
 graph TD
-    Client[External Client] -->|HTTP/REST| Gateway[API Gateway :5000]
-    Gateway -->|gRPC| AuthSvc[Auth Service :5001]
-    Gateway -->|gRPC| ProductSvc[Product Service :5002]
-    Gateway -->|gRPC| ImageSvc[Image Service :5003]
+    Client[External Client] -->|HTTP/REST| Gateway[API Gateway :5999]
+    Gateway -->|gRPC :50011| AuthSvc[Auth Service]
+    Gateway -->|gRPC :50021| ProductSvc[Product Service]
+    Gateway -->|gRPC :50041| OrderSvc[Order Service]
+    Gateway -->|gRPC :50031| PaymentSvc[Payment Service]
+    Gateway -->|HTTP :5205| ImageSvc[Image Service]
+    OrderSvc -->|gRPC: names, prices, stock| ProductSvc
+    PaymentSvc -->|gRPC: order total, mark paid| OrderSvc
+    ProductSvc -->|gRPC: delete images| ImageSvc
 ```
+
+### Order and payment flow
+
+1. `POST /api/orders` (any logged-in user) creates a `Pending` order. The Order Service reads every price from the Product Service; the client never sends a price.
+2. `POST /api/payments/process` (the owner of the order) pays it. The Payment Service reads the amount from the order, rejects orders of other users and orders that are not `Pending`, and marks the order `Paid` when the payment completes.
+3. `GET /api/payments/{id}` and `GET /api/payments/{id}/invoice` are only available to the owner of the payment and to Admins.
 
 ## 1. Core Integration Components
 
